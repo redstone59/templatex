@@ -35,7 +35,7 @@ impl ErrorStruct {
         format!(
             // '\x1b[1;31m' sets text to bold red.
             // '\x1b[0m' sets text to terminal default.
-            "=====\n{}\n=====\n\x1b[1;31mError in preprocessing\x1b[0m: {}\n=====",
+            "=====\n{}\n=====\n\x1b[1;31merror\x1b[0m: {}\n=====",
             self.get_surrounding_lines(line_index),
             message
         )

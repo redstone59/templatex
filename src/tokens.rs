@@ -1,3 +1,6 @@
+use std::fmt::Display;
+
+#[derive(Debug, PartialEq)]
 pub enum TokenType {
     // Brackets
     CurlyBraceOpen, CurlyBraceClose,
@@ -10,7 +13,8 @@ pub enum TokenType {
     Bang, BangEqual,
     GreaterThan, GreaterEqual,
     LessThan, LessEqual,
-    AmpersandDouble, PipeDouble,
+    Ampersand, AmpersandDouble, 
+    Pipe, PipeDouble,
 
     // Keywords
     Struct, Impl,
@@ -20,28 +24,37 @@ pub enum TokenType {
     True, False, None,
     Return,
 
-    // Quotes
-    QuoteSingle, QuoteDouble,
-    QuoteSingleLatex, QuoteDoubleLatex,   // L"\begin{bmatrix}1\\2\\3\end{bmatrix}"
-    QuoteSingleFormat, QuoteSingleFormat, // f""
-    QuoteSingleRaw, QuoteDoubleRaw,       // r""
-
     // Characters
-    Backslash, Semicolon, Comma,
+    SlashBack, Semicolon, Comma,
     DoubleColon, Dot,                     // paamayim nekudotayim
-//  QuestionMark, Colon,
+    QuestionMark, Colon,
 
     // Literals
-    LiteralNumber(value), LiteralString(value), LiteralStringLatex(value),
-
-    // Identifier
-    Identifier(name),
+    Number(String), 
+    String(String), StringLatex(String), StringFormat(String),
+    Identifier(String),
 
     EndOfFile
 }
 
-pub struct Token {
-    type_: TokenType,
-    lexeme: &str,
-    line: usize
+pub struct Token<'a> {
+    pub type_: TokenType,
+    pub lexeme: &'a str,
+    pub line: usize
+}
+
+impl<'a> Token<'a> {
+    pub fn new(ty: TokenType, lex: &'a str, line: usize) -> Self {
+        Self {
+            type_: ty,
+            lexeme: lex,
+            line: line
+        }
+    }
+}
+
+impl<'a> Display for Token<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Token(TokenType::{:?}, \'{}\')", self.type_, self.lexeme)
+    }
 }

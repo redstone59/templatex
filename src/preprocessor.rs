@@ -12,7 +12,7 @@ impl Preprocessor {
     pub fn new(source: &str) -> Self {
         Self {
             source: source.to_string(),
-            index: 1,
+            index: 0,
             max: source.chars().count(),
             line: 0
         }
@@ -94,7 +94,6 @@ impl Preprocessor {
                     '}' => bracket_level -= 1,
                     _ => ()
                 }
-                println!("index {}: {}, bracket level {}", self.index, current, bracket_level);
                 continue;
             }
             
