@@ -1,3 +1,6 @@
+#[path ="errors.rs"] mod errors;
+use errors::Errorable;
+
 pub struct Preprocessor {
     pub source: String,
     pub index: usize,
@@ -41,6 +44,14 @@ impl Preprocessor {
         )
     }
 
+    pub fn matches(&self, to_match: char) -> bool {
+        if let Some(next) = self.peek() {
+            return next == to_match;
+        }
+
+        return false;
+    }
+
     pub fn next(&mut self) -> Option<char> {
         self.index += 1;
         if self.current() == Some('\n') {
@@ -52,44 +63,6 @@ impl Preprocessor {
 
     pub fn is_at_end(&self) -> bool {
         self.index >= self.max
-    }
-
-    fn get_surrounding_lines(&self, index: usize) -> String {
-        let lines: Vec<String> = self.source
-                                     .lines()
-                                     .map(|x| x.to_string())
-                                     .collect();
-        
-        let mut start_line = index - 2;
-        if start_line < 0 { start_line = 0; }
-
-        let mut end_line = index + 2;
-        if end_line >= self.max { end_line = self.max - 1 }
-
-        let mut to_display: Vec<String> = vec![];
-
-        if start_line != 0 { to_display.push("   | ...".to_string()); }
-        for i in start_line..=end_line {
-            let to_push: String = format!("{:>3}: {}", i + 1, lines[i]);
-            if i == index {
-                to_display.push(format!("\x1b[1;33m{}\x1b[0m", to_push));
-            } else {
-                to_display.push(to_push);
-            }
-        }
-        if end_line != self.max { to_display.push("   | ...".to_string()); }
-        
-        to_display.join("\n")
-    }
-
-    fn err_string(&self, message: String, line_index: usize) -> String {
-        format!(
-            // '\x1b[1;31m' sets text to bold red.
-            // '\x1b[0m' sets text to terminal default.
-            "=====\n{}\n=====\n\x1b[1;31mError in preprocessing\x1b[0m: {}\n=====",
-            self.get_surrounding_lines(line_index),
-            message
-        )
     }
 
     fn match_block(&mut self) -> String {
@@ -109,19 +82,16 @@ impl Preprocessor {
                 continue;
             }
             
-            if self.is_at_end() {
-                panic!(
-                    "{}",
-                    self.err_string(
-                        format!(
-                            "Mismatched brackets for block starting at line {}, character {} to end of file.",
-                            start_line + 1, // zero-indexing :D
-                            start_index
-                        ),
-                        start_line
-                    )
+            self.to_error()
+                .throw_if(
+                    || self.is_at_end(), // theres gotta be a better way to do this
+                    format!(
+                        "Mismatched brackets for block starting at line {}, character {} to end of file.",
+                        start_line + 1, // zero-indexing :D
+                        start_index
+                    ),
+                    start_line
                 );
-            }
         }
         self.next(); // Consume '}'
 
@@ -133,7 +103,7 @@ impl Preprocessor {
         let mut resultant: Vec<String> = vec![];
 
         while !self.is_at_end() {
-            if self.next() == Some('\\') && self.peek() == Some('%') {
+            if self.next() == Some('\\') && self.matches('%') {
                 self.next();     // Consume '%'
                 if self.peek() == Some('{') {
                     self.next(); // Consume '{'
@@ -151,5 +121,14 @@ impl Iterator for Preprocessor {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next()
+    }
+}
+
+impl Errorable for Preprocessor {
+    fn to_error(&self) -> errors::ErrorStruct {
+        errors::ErrorStruct {
+            source: self.source.clone(),
+            max: self.max
+        }
     }
 }
