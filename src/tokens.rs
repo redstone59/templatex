@@ -1,4 +1,4 @@
-pub enum Tokens {
+pub enum TokenType {
     // Brackets
     CurlyBraceOpen, CurlyBraceClose,
     SquareBraceOpen, SquareBraceClose,
@@ -38,4 +38,10 @@ pub enum Tokens {
     Identifier(name),
 
     EndOfFile
+}
+
+pub struct Token {
+    type_: TokenType,
+    lexeme: &str,
+    line: usize
 }
