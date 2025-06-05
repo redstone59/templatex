@@ -17,8 +17,24 @@ impl Preprocessor {
             line: 0
         }
     }
+    
+    pub fn preprocess(&mut self) -> Vec<String> {
+        let mut resultant: Vec<String> = vec![];
 
-    pub fn current(&self) -> Option<char> {
+        while !self.is_at_end() {
+            if self.next() == Some('\\') && self.matches('%') {
+                self.next();     // Consume '%'
+                if self.matches('{') {
+                    self.next(); // Consume '{'
+                    resultant.push(self.match_block());
+                }
+            }
+        }
+
+        resultant
+    }
+
+    fn current(&self) -> Option<char> {
         if self.is_at_end() {
             return None;
         }
@@ -31,7 +47,7 @@ impl Preprocessor {
         )
     }
 
-    pub fn peek(&self) -> Option<char> {
+    fn peek(&self) -> Option<char> {
         if self.index + 1 >= self.max {
             return None;
         }
@@ -44,7 +60,7 @@ impl Preprocessor {
         )
     }
 
-    pub fn matches(&self, to_match: char) -> bool {
+    fn matches(&self, to_match: char) -> bool {
         if let Some(next) = self.peek() {
             return next == to_match;
         }
@@ -52,7 +68,7 @@ impl Preprocessor {
         return false;
     }
 
-    pub fn next(&mut self) -> Option<char> {
+    fn next(&mut self) -> Option<char> {
         self.index += 1;
         if self.current() == Some('\n') {
             self.line += 1;
@@ -61,7 +77,7 @@ impl Preprocessor {
         self.current()
     }
 
-    pub fn is_at_end(&self) -> bool {
+    fn is_at_end(&self) -> bool {
         self.index >= self.max
     }
 
@@ -97,22 +113,6 @@ impl Preprocessor {
 
         // -2 to include '\%'
         self.source[start_index - 2..self.index].to_string()
-    }
-
-    pub fn preprocess(&mut self) -> Vec<String> {
-        let mut resultant: Vec<String> = vec![];
-
-        while !self.is_at_end() {
-            if self.next() == Some('\\') && self.matches('%') {
-                self.next();     // Consume '%'
-                if self.peek() == Some('{') {
-                    self.next(); // Consume '{'
-                    resultant.push(self.match_block());
-                }
-            }
-        }
-
-        resultant
     }
 }
 

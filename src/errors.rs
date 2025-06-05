@@ -10,8 +10,7 @@ impl ErrorStruct {
                                      .map(|x| x.to_string())
                                      .collect();
         
-        let mut start_line = index - 2;
-        if start_line < 0 { start_line = 0; }
+        let start_line = if index < 2 { 0 } else { index - 2 };
 
         let mut end_line = index + 2;
         if end_line >= self.max { end_line = self.max - 1 }
@@ -32,7 +31,7 @@ impl ErrorStruct {
         to_display.join("\n")
     }
 
-    pub fn err_string(&self, message: String, line_index: usize) -> String {
+    fn err_string(&self, message: String, line_index: usize) -> String {
         format!(
             // '\x1b[1;31m' sets text to bold red.
             // '\x1b[0m' sets text to terminal default.
@@ -42,6 +41,7 @@ impl ErrorStruct {
         )
     }
 
+    /// Panic and print an error message.
     pub fn throw(&self, message: String, line_index: usize) -> ! {
         panic!(
             "{}",
@@ -52,6 +52,7 @@ impl ErrorStruct {
         )
     }
 
+    /// Panic and print an error message if `predicate()` returns `true`.
     pub fn throw_if<F>(&self, predicate: F, message: String, line_index: usize) -> ()
     where F: FnOnce() -> bool 
     {
@@ -61,6 +62,7 @@ impl ErrorStruct {
     }
 }
 
+/// Allows the struct to convert into an `ErrorStruct`, meaning that it can print pretty error messages on panicking.
 pub trait Errorable {
     fn to_error(&self) -> ErrorStruct;
 }
