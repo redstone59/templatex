@@ -11,7 +11,7 @@ impl Preprocessor {
             source: source.to_string(),
             index: 1,
             max: source.chars().count(),
-            line: 1
+            line: 0
         }
     }
 
@@ -70,7 +70,7 @@ impl Preprocessor {
 
         if start_line != 0 { to_display.push("   | ...".to_string()); }
         for i in start_line..=end_line {
-            let to_push: String = format!("{:>3}: {}", i, lines[i]);
+            let to_push: String = format!("{:>3}: {}", i + 1, lines[i]);
             if i == index {
                 to_display.push(format!("\x1b[1;33m{}\x1b[0m", to_push));
             } else {
@@ -115,7 +115,7 @@ impl Preprocessor {
                     self.err_string(
                         format!(
                             "Mismatched brackets for block starting at line {}, character {} to end of file.",
-                            start_line,
+                            start_line + 1, // zero-indexing :D
                             start_index
                         ),
                         start_line
