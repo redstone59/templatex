@@ -10,10 +10,10 @@ impl ErrorStruct {
                                      .map(|x| x.to_string())
                                      .collect();
         
-        let start_line = if index < 2 { 0 } else { index - 2 };
+        let start_line: usize = if index < 2 { 0 } else { index - 2 };
 
-        let mut end_line = index + 2;
-        if end_line >= self.max { end_line = self.max - 1 }
+        let mut end_line: usize = index + 2;
+        if end_line >= lines.iter().count() { end_line = lines.iter().count() - 1 }
 
         let mut to_display: Vec<String> = vec![];
 
