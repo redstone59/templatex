@@ -21,8 +21,9 @@ pub enum TokenType {
     For, While, Break, Continue,
     If, Else,
     Define, DashArrow,
+    Let,
     True, False, None,
-    Return,
+    Return, Echo,                         // yeah im just stealing this from php so what
 
     // Characters
     SlashBack, Semicolon, Comma,
@@ -30,9 +31,9 @@ pub enum TokenType {
     QuestionMark, Colon,
 
     // Literals
-    Number(String), 
-    String(String), StringLatex(String), StringFormat(String),
-    Identifier(String),
+    Number, 
+    String, StringLatex,
+    Identifier,
 
     EndOfFile
 }

@@ -28,6 +28,36 @@ impl Scanner {
         self.source.chars().nth(self.current - 1)
     }
 
+    fn identifier(&mut self) -> Token {
+        while self.peek().is_alphanumeric() || self.peek() == '_' {
+            self.advance();
+        }
+
+        self.make_token(self.identifier_type())
+    }
+
+    fn identifier_type(&self) -> TokenType {
+        let current_identifier: &str = &self.source[self.start..self.current];
+        match current_identifier {
+            "struct" => TokenType::Struct,
+            "implement" => TokenType::Impl,
+            "for" => TokenType::For,
+            "while" => TokenType::While,
+            "break" => TokenType::Break,
+            "continue" => TokenType::Continue,
+            "if" => TokenType::If,
+            "else" => TokenType::Else,
+            "def" => TokenType::Define,
+            "let" => TokenType::Let,
+            "true" => TokenType::True,
+            "false" => TokenType::False,
+            "none" => TokenType::None,
+            "return" => TokenType::Return,
+            "echo" => TokenType::Echo,
+            _ => TokenType::Identifier
+        }
+    }
+
     fn is_at_end(&self) -> bool {
         self.current >= self.max
     }
@@ -56,6 +86,58 @@ impl Scanner {
         true
     }
 
+    fn number(&mut self) -> Token {
+        let mut radix: u32 = 10;
+        if self.peek_previous() == '0' {
+            match self.peek() {
+                'x' | 'X' => {
+                    radix = 16;
+                    self.advance();
+                },
+                'o' | 'O' => {
+                    radix = 8;
+                    self.advance();
+                },
+                'b' | 'B' => {
+                    radix = 2;
+                    self.advance();
+                },
+                _ => radix = 10
+            }
+        }
+
+        while self.peek().is_digit(16) {
+            self.to_error()
+                .throw_if(
+                    || !self.peek().is_digit(radix),
+                    format!(
+                        "Unexpected digit '{}' in number literal with radix {}.",
+                        self.peek(),
+                        radix
+                    ),
+                    self.line);
+            self.advance();
+        }
+
+        // Decimal and exponent notation only applies to base 10 number literals.
+        if radix == 10 {
+            if self.peek() == '.' && self.peek_next().is_digit(10) {
+                self.advance();
+                while self.peek().is_digit(10) {
+                    self.advance();
+                }
+            }
+            if self.peek() == 'e' && self.peek_next().is_digit(10) {
+                self.advance();
+                while self.peek().is_digit(10) {
+                    self.advance();
+                }
+            }
+        }
+
+        self.make_token(TokenType::Number)
+    }
+
     fn peek(&self) -> char {
         self.source
             .chars()
@@ -74,6 +156,17 @@ impl Scanner {
             .unwrap()
     }
 
+    fn peek_next(&self) -> char {
+        if self.current + 1 == self.max {
+            return '\0';
+        }
+        
+        self.source
+            .chars()
+            .nth(self.current + 1)
+            .unwrap()
+    }
+
     pub fn scan_token(&mut self) -> Token {
         self.skip_whitespace();
         self.start = self.current;
@@ -87,6 +180,14 @@ impl Scanner {
         }
 
         let next: char = self.advance().unwrap();
+
+        if next.is_alphabetic() || next == '_' {
+            return self.identifier()
+        }
+
+        if next.is_digit(10) {
+            return self.number()
+        }
 
         match next {
             '{' => self.make_token(TokenType::CurlyBraceOpen),
@@ -160,7 +261,9 @@ impl Scanner {
                 } else {
                     self.make_token(TokenType::Colon)
                 }
-            }
+            },
+
+            '"' => self.string(false),
 
             _ => self.to_error()
                      .throw(
@@ -191,6 +294,34 @@ impl Scanner {
         }
         return;
     }
+
+    fn string(&mut self, raw: bool) -> Token {
+        self.advance(); // Consume '"'
+        let start_index: usize = self.current;
+        let start_line: usize = self.line;
+
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        self.to_error()
+            .throw_if(
+                || self.is_at_end(),
+                format!(
+                    "Unterminated string from line {}, character {}, to end of file.",
+                    start_line + 1,
+                    start_index
+                ),
+                start_line
+            );
+        
+        self.advance(); // Consume ending '"'.
+        self.make_token(TokenType::String)
+    }
+
 }
 
 impl Errorable for Scanner {
