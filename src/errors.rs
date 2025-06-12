@@ -31,12 +31,13 @@ impl ErrorStruct {
         to_display.join("\n")
     }
 
-    fn err_string(&self, message: String, line_index: usize) -> String {
+    fn err_string(&self, message: String, prefix: String, line_index: usize) -> String {
         format!(
             // '\x1b[1;31m' sets text to bold red.
             // '\x1b[0m' sets text to terminal default.
-            "=====\n{}\n=====\n\x1b[1;31merror\x1b[0m: {}\n=====",
+            "=====\n{}\n=====\n{}: {}\n=====",
             self.get_surrounding_lines(line_index),
+            prefix,
             message
         )
     }
@@ -46,7 +47,8 @@ impl ErrorStruct {
         panic!(
             "{}",
             self.err_string(
-                    message, 
+                    message,
+                    "\x1b[1;31merror\x1b[0m".to_string(),
                     line_index
                 )
         )
@@ -59,6 +61,17 @@ impl ErrorStruct {
         if predicate() {
             self.throw(message, line_index);
         }
+    }
+
+    pub fn warn(&self, message: String, line_index: usize) -> () {
+        println!(
+            "{}",
+            self.err_string(
+                message,
+                "\x1b[1;33mwarning\x1b[0m".to_string(), 
+                line_index
+            )
+        )
     }
 }
 
